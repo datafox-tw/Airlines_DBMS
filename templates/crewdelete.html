@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>刪除機組人員</title>
+        <style>
+            body {
+                text-align: center; /* 將文本居中對齊 */
+                background-color: #f0f0f0; /* 淺灰色背景 */
+            }
+    
+            h2 {
+                margin-top: 50px; /* 调整标题的上边距，使其居中 */
+                font-size: 48px; 
+            }
+    
+            form {
+                margin: 0 auto; /* 將表單水平居中對齊 */
+                width: 50%; /* 設定表單寬度 */
+                text-align: left; /* 將表單內文本居左對齊 */
+            }
+    
+            table {
+                margin: 0 auto; /* 將表格水平居中 */
+                width: 90%; /* 讓表格寬度充滿其父元素（這裡是form） */
+            }
+    
+            label {
+                display: block; /* 讓label佔據一整行，使得表單元素下一行排列 */
+                margin-bottom: 10px; /* 調整label下邊距，增加垂直間距 */
+            }
+    
+            input {
+                width: 100%;
+                 /* 讓選擇框和輸入框充滿其父元素 */
+                padding: 8px; /* 調整內邊距，使得元素內容與邊框有一定的間距 */
+                margin-bottom: 15px; /* 增加元素之間的垂直間距 */
+            }
+    
+            input[type="submit"] {
+                width: 100%;
+                background-color: #4CAF50;
+                color: white;
+                padding: 8px 12px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+            div input[type="date"] {
+                display: inline-block; /* 或者使用 display: flex; */
+                margin-right: 10px;
+            }
+            input[type="submit"]:hover {
+                background-color: #449048;
+            }
+        </style>
+    </head>
+<body>
+    <h2>刪除機組人員</h2>
+    <form action="/flight/crew/delete/submit" method="post">
+        <table>
+            <tr>
+                <td><label for="flight_id">輸入航班編號：</label></td>
+                <td><input type="text" id="flight_id" name="flight_id" placeholder="62546284"></td>
+            </tr>
+            <tr>
+                <td><label for="employee_id">輸入員工編號：</label></td>
+                <td><input type="text" id="employee_id" name="employee_id" placeholder="52664789"></td>
+            </tr>
+        </table>
+        <br>
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>

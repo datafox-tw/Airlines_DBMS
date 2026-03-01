@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>員工查詢結果</title>
+    <style>
+        body {
+            text-align: center; /* 將文本居中對齊 */
+            background-color: #f0f0f0; /* 淺灰色背景 */
+        }
+
+        h2 {
+            margin-top: 50px; /* 调整标题的上边距，使其居中 */
+            font-size: 48px; 
+        }
+
+        form {
+            margin: 0 auto; /* 將表單水平居中對齊 */
+            width: 50%; /* 設定表單寬度 */
+            text-align: left; /* 將表單內文本居左對齊 */
+        }
+
+        table {
+            margin: 0 auto; /* 將表格水平居中 */
+            width: 80%; /* 讓表格寬度充滿其父元素（這裡是form） */
+        }
+
+        label {
+            display: block; /* 讓label佔據一整行，使得表單元素下一行排列 */
+            margin-bottom: 10px; /* 調整label下邊距，增加垂直間距 */
+        }
+        input {
+            width: 100%; /* 讓選擇框和輸入框充滿其父元素 */
+            padding: 8px; /* 調整內邊距，使得元素內容與邊框有一定的間距 */
+            margin-bottom: 15px; /* 增加元素之間的垂直間距 */
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-sizing: border-box; /* 設定框模型為邊框盒模型，防止邊框增加元素寬度 */
+            font-size: 16px; /* 設定字體大小 */
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #449048;
+        }
+        a, button {
+            display: inline-block;
+            padding: 12px;
+            text-decoration: none;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+        }
+        a:hover, button:hover {
+            background-color: #449048;
+        }
+    </style>
+</head>
+<body>
+    <h2>員工查詢結果</h2>
+
+    <table border="1">
+        <tr>
+            {% for key in keys %}
+            <th>{{key}}</th>
+            {% endfor %}
+        </tr>
+        {% for emp in employees %}
+        <tr>
+            {% for key in keys %}
+            <td>{{ emp[key] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <td><a href="{{ url_for('home') }}">回到首頁</a></td>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>航班查詢</title>
+    <style>
+        body {
+            text-align: center; /* 將文本居中對齊 */
+            background-color: #f0f0f0; /* 淺灰色背景 */
+        }
+
+        h2 {
+            margin-top: 50px; /* 调整标题的上边距，使其居中 */
+            font-size: 48px; 
+        }
+
+        form {
+            margin: 0 auto; /* 將表單水平居中對齊 */
+            width: 50%; /* 設定表單寬度 */
+            text-align: left; /* 將表單內文本居左對齊 */
+        }
+
+        table {
+            width: 100%; /* 讓表格寬度充滿其父元素（這裡是form） */
+        }
+
+        label {
+            display: block; /* 讓label佔據一整行，使得表單元素下一行排列 */
+            margin-bottom: 10px; /* 調整label下邊距，增加垂直間距 */
+        }
+        input {
+            width: 100%; /* 讓選擇框和輸入框充滿其父元素 */
+            padding: 8px; /* 調整內邊距，使得元素內容與邊框有一定的間距 */
+            margin-bottom: 15px; /* 增加元素之間的垂直間距 */
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-sizing: border-box; /* 設定框模型為邊框盒模型，防止邊框增加元素寬度 */
+            font-size: 16px; /* 設定字體大小 */
+        }
+
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #449048;
+        }
+    </style>
+</head>
+<body>
+    <h2>航班查詢</h2>
+    <form action="/flight/search/submit" method="post">
+        <div>
+            <label for="start_date">出發日期：</label>
+            <!-- 设置預設日期值，例如今天的日期 -->
+            <input type="date" id="start_date" name="start_date" >
+            <span> ~ </span>
+            <!-- 设置預設日期值，例如明天的日期 -->
+            <input type="date" id="end_date" name="end_date">
+        </div>
+        <br>
+        <div>
+            <label for="departure">出發地：</label>
+            <select id="departure" name="departure" >
+                <!-- 設置預設出發地，這裡我們預設選擇未選擇 -->
+                <option value="default_departure" selected>未選擇</option>
+                {% for airport in data %}
+                    <option value="{{ airport['airport_id'] }}"> {{ airport['airport_name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <br>
+        <div>
+            <label for="destination">目的地：</label>
+            <select id="destination" name="destination" >
+                <!-- 設置預設目的地，這裡我們預設選擇未選擇 -->
+                <option value="default_destination" selected>未選擇</option>
+                {% for airport in data %}
+                    <option value="{{ airport['airport_id'] }}"> {{ airport['airport_name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <br>
+        <input type="submit" value="提交">
+    </form>
+</body>
+</html>

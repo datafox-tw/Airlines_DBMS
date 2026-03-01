@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即將需保養的零件</title>
+    <style>
+        body {
+            text-align: center; /* 將文本居中對齊 */
+            background-color: #f0f0f0; /* 淺灰色背景 */
+        }
+
+        h2 {
+            margin-top: 50px; /* 调整标题的上边距，使其居中 */
+            font-size: 48px; 
+        }
+
+        table {
+            margin: 0 auto; /* 將表格水平居中 */
+            width: 90%; /* 讓表格寬度充滿其父元素（這裡是form） */
+        }
+
+        a, button {
+            display: inline-block;
+            padding: 12px;
+            text-decoration: none;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+        }
+        a:hover, button:hover {
+            background-color: #449048;
+        }
+    </style>
+</head>
+<body>
+    <h2>即將需保養的零件</h2>
+
+    <table border="1">
+        <tr>
+            {% for i in range(7) %}
+            <th>{{ days[i] }}</th>
+            {% endfor %}
+        </tr>
+        <tr>
+            {% for i in range(7) %}
+            <td valign="top">
+                {% for plane in keys[i] %}
+                    Plane ID: {{ plane }}<br>
+                    {% for row in schedule[i][plane] %}
+                        - Parts ID: {{ row['parts_id'] }}<br>                    
+                    {% endfor %}
+                    <br>
+                {% endfor %}
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+    <br>
+    <td><a href="{{ url_for('home') }}">回到首頁</a></td>
+</body>
+</html>

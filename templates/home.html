@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首頁</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        h2 {
+            margin-top: 50px;
+            font-size: 48px; 
+        }
+
+        table {
+            width: 50%;
+            margin: 20px auto;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #6a7d6b;
+            color: white;
+            padding: 10px;
+            font-size: 20px;
+        }
+
+        td {
+            padding: 15px;
+            width: 33.33%; /* 將每個 td 元素均分為三等份 */
+            text-align: center;
+        }
+
+        a, button {
+            display: inline-block;
+            padding: 12px;
+            text-decoration: none;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 16px;
+        }
+        .button-manager {
+            background-color: #ff4d4d; /* 紅色 */
+        }
+
+        .button-employee {
+            background-color: #4CAF50; /* 綠色 */
+        }
+
+        a:hover, button:hover {
+            background-color: #449048;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <h2>首頁</h2>
+
+    <!-- 切換連結 -->
+    <!-- 切換按鈕 -->
+    <button id="toggleRole" class="button-employee">切換角色 (目前: Employee)</button>
+
+
+    <!-- 新增航班和刪除航班的選項，僅在 Founder 模式下顯示 -->
+    
+    <table>
+        <tr>
+            <th colspan="3">航班</th>
+        </tr>
+        <tr>
+            <td><a href="{{ url_for('flightSearch') }}">查詢航班</a></td>
+            <td class="Manager" style="display:none;"><a href="{{ url_for('flightIns') }}">新增航班</a></td>
+            <td class="Manager" style="display:none;"><a href="{{ url_for('flightDel') }}">刪除航班</a></td>
+        </tr>
+    </table>
+    
+
+    <table>
+        <tr>
+            <th colspan="3">機組人員</th>
+        </tr>
+        <tr>
+            <td><a href="{{ url_for('flightCrew') }}">查詢航班機組人員</a></td>
+            <td class="Manager" style="display:none;"><a href="{{ url_for('flightCrewInsert') }}">新增機組人員</a></td>
+            <td class="Manager" style="display:none;"><a href="{{ url_for('flightCrewDelete') }}">刪除機組人員</a></td>
+        </tr>
+    </table>
+
+    <div class="Manager" style="display:none;">
+    <table>
+        <tr>
+            <th colspan="3">員工</th>
+        </tr>
+        <tr>
+            <td><a href="{{ url_for('empPosition') }}">員工查詢—以職位</a></td>
+            <td><a href="{{ url_for('empId') }}">員工查詢—以編號</a></td>
+        </tr>
+    </table>
+    </div>
+
+    <table>
+        <tr>
+            <th colspan="3">零件保養</th>
+        </tr>
+        <tr>
+            <td><a href="{{ url_for('partSchedule') }}">即將需保養的零件</a></td>
+            <td><a href="{{ url_for('maintainRecord') }}">新增維修紀錄</a></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <th colspan="3">機票</th>
+        </tr>
+        <tr>
+            <td><a href="{{ url_for('ticUpdate') }}" colspan="3">修改機票狀態</a></td>
+        </tr>
+    </table>
+    <!-- jQuery 切換功能 -->
+    <script>
+        $(document).ready(function() {
+            var isManager = false;
+
+            $('#toggleRole').click(function() {
+                isManager = !isManager; // 切換狀態
+                if (isManager) {
+                    $('.Manager').show();
+                    $(this).removeClass('button-employee').addClass('button-manager');
+                    $(this).text('切換角色 (目前: Manager)');
+                } else {
+                    $('.Manager').hide();
+                    $(this).removeClass('button-manager').addClass('button-employee');
+                    $(this).text('切換角色 (目前: Employee)');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
