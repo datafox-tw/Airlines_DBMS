@@ -14,6 +14,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
 db = SQLAlchemy(app)
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Pass the exception message to the template
+    return render_template('error.html', error_message=str(e)), 500
+
 @app.route("/")
 def home():
     return render_template('home.html')

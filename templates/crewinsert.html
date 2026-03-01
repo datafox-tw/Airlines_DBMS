@@ -1,47 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新增機組人員</title>
     <style>
         body {
-            text-align: center; /* 將文本居中對齊 */
-            background-color: #f0f0f0; /* 淺灰色背景 */
+            text-align: center;
+            /* 將文本居中對齊 */
+            background-color: #f0f0f0;
+            /* 淺灰色背景 */
         }
 
         h2 {
-            margin-top: 50px; /* 调整标题的上边距，使其居中 */
-            font-size: 48px; 
+            margin-top: 50px;
+            /* 调整标题的上边距，使其居中 */
+            font-size: 48px;
         }
 
         form {
-            margin: 0 auto; /* 將表單水平居中對齊 */
-            width: 50%; /* 設定表單寬度 */
-            text-align: left; /* 將表單內文本居左對齊 */
+            margin: 0 auto;
+            /* 將表單水平居中對齊 */
+            width: 50%;
+            /* 設定表單寬度 */
+            text-align: left;
+            /* 將表單內文本居左對齊 */
         }
 
         table {
-                margin: 0 auto; /* 將表格水平居中 */
-                width: 90%; /* 讓表格寬度充滿其父元素（這裡是form） */
-            }
+            margin: 0 auto;
+            /* 將表格水平居中 */
+            width: 90%;
+            /* 讓表格寬度充滿其父元素（這裡是form） */
+        }
 
         label {
-            display: block; /* 讓label佔據一整行，使得表單元素下一行排列 */
-            margin-bottom: 10px; /* 調整label下邊距，增加垂直間距 */
+            display: block;
+            /* 讓label佔據一整行，使得表單元素下一行排列 */
+            margin-bottom: 10px;
+            /* 調整label下邊距，增加垂直間距 */
         }
+
         input {
-            width: 100%; /* 讓選擇框和輸入框充滿其父元素 */
-            padding: 8px; /* 調整內邊距，使得元素內容與邊框有一定的間距 */
-            margin-bottom: 15px; /* 增加元素之間的垂直間距 */
+            width: 100%;
+            /* 讓選擇框和輸入框充滿其父元素 */
+            padding: 8px;
+            /* 調整內邊距，使得元素內容與邊框有一定的間距 */
+            margin-bottom: 15px;
+            /* 增加元素之間的垂直間距 */
         }
+
         select {
             width: 100%;
             padding: 8px;
             margin-bottom: 15px;
             border-radius: 5px;
-            box-sizing: border-box; /* 設定框模型為邊框盒模型，防止邊框增加元素寬度 */
-            font-size: 16px; /* 設定字體大小 */
+            box-sizing: border-box;
+            /* 設定框模型為邊框盒模型，防止邊框增加元素寬度 */
+            font-size: 16px;
+            /* 設定字體大小 */
         }
 
         input[type="submit"] {
@@ -56,10 +74,41 @@
         input[type="submit"]:hover {
             background-color: #449048;
         }
+
+        .instruction-box {
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px auto;
+            width: 60%;
+            text-align: left;
+            font-size: 15px;
+            color: #0d47a1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
     </style>
 </head>
+
 <body>
     <h2>新增機組人員</h2>
+
+    <a href="{{ url_for('home') }}" class="home-btn">← 回首頁</a>
+
+    <div class="instruction-box">
+        👥 <b>操作說明：</b><br>
+        • <b>航班編號：</b>請輸入現有的航班 ID（可在「查詢航班」中找到）。<br>
+        • <b>員工編號：</b>請輸入現有的員工 ID（可在「員工查詢」中找到）。<br>
+        • ⚠️ 如果輸入了不存在的 ID，系統將會報錯並引導您返回。
+    </div>
     <form action="/flight/crew/insert/submit" method="post">
         <table>
             <tr>
@@ -87,4 +136,5 @@
         <input type="submit" value="提交">
     </form>
 </body>
+
 </html>
