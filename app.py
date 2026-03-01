@@ -354,4 +354,4 @@ def ticUpdateSubmit():
     return render_template('success.html')
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5005, debug=True)
