@@ -1,10 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
-
+from models import db, Airport, Airplane, Route, Flight, Ticket, Employee, Execute, Maintain, Parts
 
 load_dotenv()
 
@@ -12,7 +11,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 
-db = SQLAlchemy(app)
+db.init_app(app)
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -23,12 +22,28 @@ def handle_exception(e):
 def home():
     return render_template('home.html')
 
+@app.route("/dashboard")
+def dashboard():
+    # v1.0 Feature: Dashboard
+    now = datetime.now()
+    # Closest flights (for demo, showing latest 5 records in history)
+    upcoming_flights = Flight.query.order_by(Flight.depart_time.desc()).limit(5).all()
+    # Statistics
+    total_flights = Flight.query.count()
+    total_airports = Airport.query.count()
+    total_employees = Employee.query.count()
+    
+    return render_template('dashboard.html', 
+                         upcoming_flights=upcoming_flights,
+                         total_flights=total_flights,
+                         total_airports=total_airports,
+                         total_employees=total_employees,
+                         now=now)
+
 @app.route("/flight/search")
 def flightSearch():
-    sql_cmd = "select * from airport;"
- 
-    query_data = db.session.execute(text(sql_cmd)).fetchall()
-    return render_template('flight.html', data = query_data)
+    airports = Airport.query.all()
+    return render_template('flight.html', data=airports)
 
 @app.route('/flight/search/submit', methods=['POST'])
 def flightSubmit():
@@ -37,121 +52,59 @@ def flightSubmit():
     departure = request.form.get('departure')
     destination = request.form.get('destination')
 
-    if departure == 'default_departure' and destination == 'default_destination':
-        sql_cmd = f"""
-                    Select f.*, r.depart_airport, r.arrive_airport, s.ticket_sold
-                    From (Select *
-                            From flight
-                            Where DATE(depart_time) Between '{start_date}' And
-                            '{end_date}') As f
-                    Join route As r on f.route_id = r.route_id
-                    Left Join (Select flight_id , Count(*) As ticket_sold
-                                From ticket
-                                Group by flight_id) As s on f.flight_id = s.flight_id
-                    Order By f.depart_time;
-                    """
-    elif departure == 'default_departure':
-        sql_cmd = f"""
-                    Select f.*, r.depart_airport, r.arrive_airport, s.ticket_sold
-                    From (Select *
-                            From flight
-                            Where DATE(depart_time) Between '{start_date}' And
-                            '{end_date}') As f
-                    Join route As r on f.route_id = r.route_id
-                    Left Join (Select flight_id , Count(*) As ticket_sold
-                                From ticket
-                                Group by flight_id) As s on f.flight_id = s.flight_id
-                    Where r.arrive_airport = {destination}
-                    Order By f.depart_time;
-                    """
-    elif destination == 'default_destination':
-        sql_cmd = f"""
-                    Select f.*, r.depart_airport, r.arrive_airport, s.ticket_sold
-                    From (Select *
-                            From flight
-                            Where DATE(depart_time) Between '{start_date}' And
-                            '{end_date}') As f
-                    Join route As r on f.route_id = r.route_id
-                    Left Join (Select flight_id , Count(*) As ticket_sold
-                                From ticket
-                                Group by flight_id) As s on f.flight_id = s.flight_id
-                    Where r.depart_airport = {departure}
-                    Order By f.depart_time;
-                    """
-    else:
-        sql_cmd = f"""
-                    Select f.*, r.depart_airport, r.arrive_airport, s.ticket_sold
-                    From (Select *
-                            From flight
-                            Where DATE(depart_time) Between '{start_date}' And
-                            '{end_date}') As f
-                    Join route As r on f.route_id = r.route_id
-                    Left Join (Select flight_id , Count(*) As ticket_sold
-                                From ticket
-                                Group by flight_id) As s on f.flight_id = s.flight_id
-                    Where r.depart_airport = {departure} And r.arrive_airport = {destination}
-                    Order By f.depart_time;
-                    """
- 
-    query_data = db.session.execute(text(sql_cmd))
-    keys = query_data.keys()
-    query_data = query_data.fetchall()
-    return render_template('flightsubmit.html', data = query_data, keys = keys \
-            , start_date = start_date, end_date = end_date, departure = departure, destination = destination)
+    # Querying using ORM
+    query = Flight.query.join(Route)
+    
+    if start_date and end_date:
+        query = query.filter(Flight.depart_time.between(start_date, end_date))
+    
+    if departure != 'default_departure':
+        query = query.filter(Route.depart_airport == departure)
+    
+    if destination != 'default_destination':
+        query = query.filter(Route.arrive_airport == destination)
+    
+    flights = query.order_by(Flight.depart_time).all()
+    
+    # Bridge for legacy templates
+    keys = Flight.__table__.columns.keys()
+    
+    return render_template('flightsubmit.html', 
+                         data=flights, 
+                         keys=keys,
+                         start_date=start_date, 
+                         end_date=end_date, 
+                         departure=departure, 
+                         destination=destination)
 
 @app.route("/flight/insert")
 def flightIns():
-    sql1 = "select * from airport;"
-    sql2 = "select * from airplane;"
- 
-    airports = db.session.execute(text(sql1)).fetchall()
-    planes = db.session.execute(text(sql2)).fetchall()
-    return render_template('flightinsert.html', airports = airports, planes = planes)
+    airports = Airport.query.all()
+    planes = Airplane.query.all()
+    return render_template('flightinsert.html', airports=airports, planes=planes)
 
 @app.route('/flight/insert/submit', methods=['POST'])
 def flightInsSubmit():
     departure = request.form.get('departure')
     destination = request.form.get('destination')
-    sql_cmd = f"""
-                Select route_id
-                From route
-                Where depart_airport = {departure}
-                And arrive_airport = {destination};
-                """
-    route = db.session.execute(text(sql_cmd)).fetchall()
+    
+    route = Route.query.filter_by(depart_airport=departure, arrive_airport=destination).first()
+    if not route:
+        raise Exception("找不到對應的航線，請確認出發地與目的地。")
 
-    sql_cmd = "Select Max(flight_id) From flight;"
-    max_id = db.session.execute(text(sql_cmd)).fetchall()
-
-    id = max_id[0][0] + 1
-    depart_time = request.form.get('depart_time')
-    arrive_time = request.form.get('arrive_time')
-    airplane = request.form.get('airplane')
-    route_id = route[0][0]
-    max_luggage_capacity = request.form.get('max_luggage_capacity')
-    max_sell_amount = request.form.get('max_sell_amount')
-
-    sql_cmd = f"""
-                INSERT INTO flight (
-                    flight_id,
-                    plane_id,
-                    route_id,
-                    depart_time,
-                    arrive_time,
-                    max_luggage_capacity,
-                    max_sell_amount
-                ) VALUES (
-                    {id},
-                    {airplane},
-                    {route_id},
-                    '{depart_time}',
-                    '{arrive_time}',
-                    {max_luggage_capacity},
-                    {max_sell_amount}
-                );
-                """
- 
-    db.session.execute(text(sql_cmd))
+    max_id = db.session.query(db.func.max(Flight.flight_id)).scalar() or 0
+    
+    new_flight = Flight(
+        flight_id=max_id + 1,
+        plane_id=request.form.get('airplane'),
+        route_id=route.route_id,
+        depart_time=request.form.get('depart_time'),
+        arrive_time=request.form.get('arrive_time'),
+        max_luggage_capacity=request.form.get('max_luggage_capacity'),
+        max_sell_amount=request.form.get('max_sell_amount')
+    )
+    
+    db.session.add(new_flight)
     db.session.commit()
     return render_template('success.html')
 
@@ -161,21 +114,13 @@ def flightDel():
 
 @app.route("/flight/delete/submit", methods=['POST'])
 def flightDelSubmit():
-    id = request.form.get('flight_id')
-
-    sql1 = f"""
-                Delete From flight
-                Where flight_id = {id};
-                """
-    sql2 = f"""
-                Update ticket
-                Set status = 'P'
-                Where flight_id = {id};
-                """
- 
-    db.session.execute(text(sql1))
-    db.session.execute(text(sql2))
-    db.session.commit()
+    fid = request.form.get('flight_id')
+    flight = Flight.query.get(fid)
+    if flight:
+        # Cascade logic from legacy: Update tickets to status 'P'
+        Ticket.query.filter_by(flight_id=fid).update({"status": 'P'})
+        db.session.delete(flight)
+        db.session.commit()
     return render_template('success.html')
 
 @app.route("/flight/crew")
@@ -184,19 +129,10 @@ def flightCrew():
 
 @app.route("/flight/crew/submit", methods=['POST'])
 def flightCrewSubmit():
-    id = request.form.get('flight_id')
-
-    sql_cmd = f"""
-                Select *
-                From execute
-                Where flight_id = {id}
-                Order by employee_title;
-                """
- 
-    query_data = db.session.execute(text(sql_cmd))
-    keys = query_data.keys()
-    query_data = query_data.fetchall()
-    return render_template('flightcrewsubmit.html', execute = query_data, keys = keys)
+    fid = request.form.get('flight_id')
+    crews = Execute.query.filter_by(flight_id=fid).order_by(Execute.employee_title).all()
+    keys = Execute.__table__.columns.keys()
+    return render_template('flightcrewsubmit.html', execute=crews, keys=keys, flight_id=fid)
 
 @app.route("/flight/crew/insert")
 def flightCrewInsert():
@@ -204,20 +140,12 @@ def flightCrewInsert():
 
 @app.route("/flight/crew/insert/submit", methods=['POST'])
 def flightCrewInsertSubmit():
-    flight_id = request.form.get('flight_id')
-    employee_id = request.form.get('employee_id')
-    employee_title = request.form.get('employee_title')
-
-    sql_cmd = f"""
-                Insert into execute (
-                    flight_id, employee_id, employee_title
-                )
-                Values (
-                    {flight_id}, {employee_id}, '{employee_title}'
-                );
-                """
- 
-    db.session.execute(text(sql_cmd))
+    new_crew = Execute(
+        flight_id=request.form.get('flight_id'),
+        employee_id=request.form.get('employee_id'),
+        employee_title=request.form.get('employee_title')
+    )
+    db.session.add(new_crew)
     db.session.commit()
     return render_template('success.html')
 
@@ -227,44 +155,27 @@ def flightCrewDelete():
 
 @app.route("/flight/crew/delete/submit", methods=['POST'])
 def flightCrewDeleteSubmit():
-    flight_id = request.form.get('flight_id')
-    employee_id = request.form.get('employee_id')
-
-    sql_cmd = f"""
-                Delete From execute
-                Where flight_id = {flight_id}
-                And employee_id = {employee_id};
-                """
- 
-    db.session.execute(text(sql_cmd))
-    db.session.commit()
+    fid = request.form.get('flight_id')
+    eid = request.form.get('employee_id')
+    crew = Execute.query.filter_by(flight_id=fid, employee_id=eid).first()
+    if crew:
+        db.session.delete(crew)
+        db.session.commit()
     return render_template('success.html')
 
 @app.route("/employee/position")
 def empPosition():
-    sql_cmd = f"""
-                select employee_position, count(*) as employee_count
-                from employee
-                group by employee_position;
-                """
- 
-    query_data = db.session.execute(text(sql_cmd)).fetchall()
-    return render_template('empposition.html', employees = query_data)
+    # Get distinct positions and counts
+    stats = db.session.query(Employee.employee_position, db.func.count(Employee.employee_id))\
+                      .group_by(Employee.employee_position).all()
+    return render_template('empposition.html', employees=stats)
 
 @app.route('/employee/position/submit', methods=['POST'])
 def empPositionSubmit():
-    position = request.form.get('selectedemployee')
-
-    sql_cmd = f"""
-                select *
-                from employee
-                where employee_position = '{position}';
-                """
- 
-    query_data = db.session.execute(text(sql_cmd))
-    keys = query_data.keys()
-    query_data = query_data.fetchall()
-    return render_template('empsubmit.html', employees = query_data, keys = keys)
+    pos = request.form.get('selectedemployee')
+    emps = Employee.query.filter_by(employee_position=pos).all()
+    keys = Employee.__table__.columns.keys()
+    return render_template('empsubmit.html', employees=emps, keys=keys)
 
 @app.route("/employee/id")
 def empId():
@@ -272,47 +183,43 @@ def empId():
 
 @app.route('/employee/id/submit', methods=['POST'])
 def empIdSubmit():
-    id = request.form.get('emp_id')
-
-    sql_cmd = f"""
-                select *
-                from employee
-                where employee_id = {id};
-                """
- 
-    query_data = db.session.execute(text(sql_cmd))
-    keys = query_data.keys()
-    query_data = query_data.fetchall()
-    return render_template('empsubmit.html', employees = query_data, keys = keys)
+    eid = request.form.get('emp_id')
+    emp = Employee.query.filter_by(employee_id=eid).all() # Template expects a list
+    keys = Employee.__table__.columns.keys()
+    return render_template('empsubmit.html', employees=emp, keys=keys)
 
 @app.route("/partschedule")
 def partSchedule():
     start_date = datetime.now().date()
     end_date = start_date + timedelta(days=6)
 
-    sql_cmd = f"""
-        SELECT pt.parts_id, pt.plane_id, mt.last_mt + pt.maintain_frequency AS mt_needed
-        FROM (
-            SELECT parts_id, MAX(maintain_date) AS last_mt
-            FROM maintain
-            GROUP BY parts_id
-        ) AS mt
-        JOIN parts AS pt ON mt.parts_id = pt.parts_id
-        WHERE mt.last_mt + pt.maintain_frequency BETWEEN '{start_date}' AND '{end_date}'
-        ORDER BY mt_needed, pt.plane_id;
-    """
-    query_data = db.session.execute(text(sql_cmd))
+    # Legacy SQL was complex: mt.last_mt + pt.maintain_frequency
+    # Refactoring this to a slightly cleaner ORM approach or keeping hybrid if needed.
+    # For 1.0, let's use ORM for readability.
+    
+    # Subquery for last maintenance
+    subq = db.session.query(
+        Maintain.parts_id,
+        db.func.max(Maintain.maintain_date).label('last_mt')
+    ).group_by(Maintain.parts_id).subquery()
+    
+    query = db.session.query(Parts, subq.c.last_mt)\
+                      .join(subq, Parts.parts_id == subq.c.parts_id).all()
+    
     days = [start_date + timedelta(days=i) for i in range(7)]
-    schedule = [{} for i in range(7)]
-    for row in query_data:
+    schedule = [{} for _ in range(7)]
+    
+    for part, last_mt in query:
+        next_mt = last_mt + timedelta(days=part.maintain_frequency)
         for i in range(7):
-            if row[2] == days[i]:
-                if row[1] not in schedule[i].keys():
-                    schedule[i][row[1]] = [row]
-                else:
-                    schedule[i][row[1]].append(row)
-    keys = [schedule[i].keys() for i in range(7)]
-    return render_template('partschedule.html', schedule = schedule, keys = keys, days = days)
+            if next_mt == days[i]:
+                if part.plane_id not in schedule[i]:
+                    schedule[i][part.plane_id] = []
+                # Match legacy structure: [parts_id, plane_id, mt_needed]
+                schedule[i][part.plane_id].append([part.parts_id, part.plane_id, next_mt])
+                
+    keys = [s.keys() for s in schedule]
+    return render_template('partschedule.html', schedule=schedule, keys=keys, days=days)
 
 @app.route("/maintainrecord")
 def maintainRecord():
@@ -320,17 +227,13 @@ def maintainRecord():
 
 @app.route("/maintainrecord/submit", methods=['POST'])
 def maintainRecordSubmit():
-    mt_date = request.form.get('mt_date')
-    worker_id = request.form.get('worker_id')
-    parts_id = request.form.get('parts_id')
-    mt_cost = request.form.get('mt_cost')
-
-    sql_cmd = f"""
-                Insert Into maintain (parts_id , employee_id, maintain_date , maintain_cost)
-                Values ({parts_id}, {worker_id}, '{mt_date}', {mt_cost});
-                """
- 
-    db.session.execute(text(sql_cmd))
+    new_mt = Maintain(
+        parts_id=request.form.get('parts_id'),
+        employee_id=request.form.get('worker_id'),
+        maintain_date=request.form.get('mt_date'),
+        maintain_cost=request.form.get('mt_cost')
+    )
+    db.session.add(new_mt)
     db.session.commit()
     return render_template('success.html')
 
@@ -340,17 +243,12 @@ def ticUpdate():
 
 @app.route('/ticket/update/submit', methods=['POST'])
 def ticUpdateSubmit():
-    id = request.form.get('ticket_id')
+    tid = request.form.get('ticket_id')
     status = request.form.get('status')
-
-    sql_cmd = f"""
-                Update ticket
-                Set status = '{status}'
-                Where ticket_id = {id};
-                """
- 
-    db.session.execute(text(sql_cmd))
-    db.session.commit()
+    ticket = Ticket.query.get(tid)
+    if ticket:
+        ticket.status = status
+        db.session.commit()
     return render_template('success.html')
 
 if __name__ == '__main__':
